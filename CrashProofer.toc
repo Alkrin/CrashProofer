@@ -1,0 +1,11 @@
+## Interface: 70300
+## Title: CrashProofer
+## Notes: Library to provide a Persistent Global Data Store that protects addon data from crashes.
+## Author: Tiok
+## Version: 0.0.1
+## OptionalDeps:
+## Dependencies:
+## SavedVariables: CP_DB
+## SavedVariablesPerCharacter: 
+
+CrashProofer.xml
