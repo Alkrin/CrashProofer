@@ -22,9 +22,7 @@ end
 
 function CrashProofer_RegisterSlashCommands()
     SLASH_cpStuff1 = "/cp";
-    SlashCmdList["cpStuff"] = function() 
-        CrashProofer_SlashCommand()
-    end
+    SlashCmdList["cpStuff"] = CrashProofer_SlashCommand
 end
 
 function CrashProofer_SlashCommand()
@@ -37,7 +35,7 @@ function CrashProofer_OnLoad()
     CrashProofer_RegisterSlashCommands()
 end
 
-function CrashProofer_OnEvent(event, ...)
+function CrashProofer_OnEvent(frame, event, ...)
     if (event == "VARIABLES_LOADED") then
         CrashProofer_Init()
     elseif (event == "CHAT_MSG_ADDON") then
@@ -187,15 +185,15 @@ function table.save(tbl)
             thandled[i] = true
             local stype = type(v)
             -- only handle value
-            if stype == "table" then
-                if not lookup[v] then
+            if (stype == "table") then
+                if (not lookup[v]) then
                     table.insert(tables, v)
                     lookup[v] = #tables
                 end
                 result = result..charS.."{"..lookup[v].."},"..charE
-            elseif stype == "string" then
+            elseif (stype == "string") then
                 result = result..charS..exportstring(v)..","..charE
-            elseif stype == "number" then
+            elseif (stype == "number") then
                 result = result..charS..tostring( v )..","..charE
             end
         end
@@ -207,30 +205,30 @@ function table.save(tbl)
                 local str = ""
                 local stype = type(i)
                 -- handle index
-                if stype == "table" then
-                    if not lookup[i] then
+                if (stype == "table") then
+                    if (not lookup[i]) then
                         table.insert(tables, i)
                         lookup[i] = #tables
                     end
                     str = charS.."[{"..lookup[i].."}]="
-                elseif stype == "string" then
+                elseif (stype == "string") then
                     str = charS.."["..exportstring(i).."]="
-                elseif stype == "number" then
+                elseif (stype == "number") then
                     str = charS.."["..tostring(i).."]="
                 end
             
-                if str ~= "" then
+                if (str ~= "") then
                     stype = type(v)
                     -- handle value
-                    if stype == "table" then
-                        if not lookup[v] then
+                    if (stype == "table") then
+                        if (not lookup[v]) then
                             table.insert(tables, v)
                             lookup[v] = #tables
                         end
                         result = result..str.."{"..lookup[v].."},"..charE
-                    elseif stype == "string" then
+                    elseif (stype == "string") then
                         result = result..str..exportstring( v )..","..charE
-                    elseif stype == "number" then
+                    elseif (stype == "number") then
                         result = result..str..tostring( v )..","..charE
                     end
                 end
@@ -249,10 +247,10 @@ function table.load(tstring)
     for idx = 1, #tables do
         local tolinki = {}
         for i, v in pairs(tables[idx]) do
-            if type(v) == "table" then
+            if (type(v) == "table") then
                 tables[idx][i] = tables[v[1]]
             end
-            if type(i) == "table" and tables[i[1]] then
+            if (type(i) == "table") and tables[i[1]] then
                 table.insert(tolinki, {i, tables[i[1]]})
             end
         end
