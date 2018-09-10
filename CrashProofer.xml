@@ -1,6 +1,9 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
     <Script file="CrashProoferUtils.lua" />
+    <Script file="CrashProoferMessage.lua" />
+    <Script file="CrashProoferNetwork.lua" />
+    <Script file="CrashProoferHeadsUpSession.lua" />
     <Script file="CrashProofer.lua" />
     <Frame name="CrashProoferFrame">
         <Scripts>

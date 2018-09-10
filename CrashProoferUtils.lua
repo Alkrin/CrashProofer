@@ -1,5 +1,7 @@
 --CrashProoferUtils
 
+CRASHPROOFER_PREFIX = "CxP";
+
 function CrashProofer_GetDateTimeStamp()
     local _, month, day, year = CalendarGetDate()
 
@@ -134,4 +136,15 @@ function table.load(tstring)
         end
     end
     return tables[1]
+end
+
+function CrashProofer_SendNetworkMessage(msg, recipient)
+    -- CrashProofer only backs up to and from guild members.
+    if (IsInGuild()) then
+        if (recipient == nil) then
+            C_ChatInfo.SendAddonMessage(CRASHPROOFER_PREFIX, msg, "GUILD")
+        else
+            C_ChatInfo.SendAddonMessage(CRASHPROOFER_PREFIX, msg, "WHISPER", recipient)
+        end
+    end
 end
