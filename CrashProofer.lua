@@ -27,6 +27,7 @@ function CrashProofer_Init()
     -- When you log in, the first thing you need is a HeadsUp session to see who
     -- else is online and using CrashProofer.
     CP_HEADSUP_SESSION:SetSessionEndedDelegate(CrashProofer_OnHeadsUpSessionEnded)
+    D("Init() - Calling HUP.StartSession")
     CP_HEADSUP_SESSION:StartSession()
 
     --DEBUG ONLY
@@ -63,13 +64,16 @@ end
 
 function CrashProofer_NetworkEvent(msg, channel, sender)
     -- Process only network events from others; ignore ourselves.
+    sender = CrashProofer_NameFromSender(sender)
     if (sender ~= UnitName("player")) then
+        D("NetworkEvent from "..sender.." ~= "..UnitName("player"))
         CP_NETWORK:PacketReceived(msg, sender)
     end
 end
 
 function CrashProofer_OnHeadsUpSessionEnded()
     --TODO: Start Announce session.
+    D("CrashProofer_OnHeadsUpSessionEnded()")
 end
 
 local function CrashProofer_SendPendingBroadcasts()
@@ -167,10 +171,6 @@ end
 
 
 
-
-
-
-
 function CPTEST()
     CrashProofer_RegisterForStorage("DEBUG")
 
@@ -192,4 +192,7 @@ function CPTEST()
     t.t.n = "N" 
 
     CrashProofer_UpdateStorage("DEBUG", t)
+
+    D("Attempting to send HUP from Bob")
+    CrashProofer_NetworkEvent("HUP0010#0", "", "Bob")
 end
