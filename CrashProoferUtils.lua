@@ -2,37 +2,16 @@
 
 CRASHPROOFER_PREFIX = "CxP";
 
-function CrashProofer_GetDateTimeStamp()
-    local _, month, day, year = CalendarGetDate()
-
-    if (month < 10) then 
-        month = "0"..month 
-    end
-    if (day < 10) then 
-        day = "0"..day 
-    end
-
-    return year..month..day
-end
-
-function CrashProofer_GetFullTimeStamp()
-    local hour,minute = GetGameTime()
-    if (hour < 10) then
-        hour = "0"..hour
-    end
-    if (minute < 10) then
-        minute = "0"..minute
-    end
-
-    return CrashProofer_GetDateTimeStamp()..hour..minute
-end
-
 function CrashProofer_TableSize(table)
     local count = 0
     for _, _ in pairs(table) do 
         count = count + 1 
     end
     return count
+end
+
+function CrashProofer_TimeStamp()
+    return date("%y%m%d%H%M%S")
 end
 
 function D(s)
@@ -147,4 +126,11 @@ function CrashProofer_SendNetworkMessage(msg, recipient)
             C_ChatInfo.SendAddonMessage(CRASHPROOFER_PREFIX, msg, "WHISPER", recipient)
         end
     end
+end
+
+function CrashProofer_NameFromSender(rawSender)
+    -- This pattern gets all of the letters at the front of the string.  It will stop if it hits a '-', which
+    -- usually precedes a server name.
+    local nameOnly = string.match(rawSender, "(%a+)")
+    return nameOnly
 end

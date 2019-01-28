@@ -89,6 +89,7 @@ function CrashProoferHeadsUpSession.SendHeadsUp(self, recipient)
 end
 
 function CrashProofer_ParseHeadsUpPacket(packet, sender)
+    sender = CrashProofer_NameFromSender(sender)
     if (CP_HEADSUP_SESSION:IsInProgress()) then
         --If we are already in a HeadsUpSession, track the sender.
         if (CP_HEADSUP_SESSION.Users[sender] == nil) then
