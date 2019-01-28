@@ -32,6 +32,7 @@ local function CrashProoferHeadsUpSession_ResetExpiration()
 end
 
 function CrashProoferHeadsUpSession.StartSession(self)
+    D("HUPSession.StartSession()")
     --TODO: Prepare state for HeadsUp session.
     --TODO: Pretty sure that means that we need to cancel any in-progress Announce or Record sessions, since
     --      the work would end up being duplicated at the end of the new HeadsUp session otherwise.
@@ -80,7 +81,12 @@ function CrashProoferHeadsUpSession.OnUpdate(self)
 end
 
 function CrashProoferHeadsUpSession.SendHeadsUp(self, recipient)
-    D("SendHeadsUp started")
+    if (recipient == nil) then
+        D("SendHeadsUp to all")
+    else
+        D("SendHeadsUp to "..recipient)
+    end
+    
     --A HeadsUp message has no extra data beyond the sender that Blizzard already provides.
     local msg = CrashProoferMessage_Create(CP_HEADSUP_PREFIX, "", recipient)
     --If the recipient is nil, this HeadsUp will cancel any pending messages, as the new HeadsUp
@@ -90,19 +96,24 @@ end
 
 function CrashProofer_ParseHeadsUpPacket(packet, sender)
     sender = CrashProofer_NameFromSender(sender)
+    D("Received HUP from "..sender)
     if (CP_HEADSUP_SESSION:IsInProgress()) then
+        D("..HUPSession already in progress")
         --If we are already in a HeadsUpSession, track the sender.
         if (CP_HEADSUP_SESSION.Users[sender] == nil) then
+            D(".."..sender.." is new to this session, adding to list.")
             CP_HEADSUP_SESSION.Users[sender] = 1
             --Let that person know that we exist.  Don't broadcast globally and spam folks.
             --We only do global broadcasts when we start a session.
             CP_HEADSUP_SESSION:SendHeadsUp(sender)
         else
+            D(".."..sender.." is already known.")
             --We already know about this person, so we don't have to do anything.
         end
         --Don't time out until the airwaves have been silent for a while.
         CrashProoferHeadsUpSession_ResetExpiration()
     else
+        D("..No active HUPSession.  Starting one.")
         --TODO: If we are not in a session, we need to start one and potentially interrupt any other session types.
         CP_HEADSUP_SESSION:StartSession()
     end
