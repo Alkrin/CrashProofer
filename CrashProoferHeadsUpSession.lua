@@ -42,7 +42,7 @@ function CrashProoferHeadsUpSession.StartSession(self)
     CrashProoferHeadsUpSession.Users = {}
     CrashProoferHeadsUpSession.Users[UnitName("player")] = 1
     --When we start a session, let everyone know we're here.
-    --Passing 'true' means we want to cancel everything else we were doing, as it would be made redundant
+    --Passing 'nil' means we want to cancel everything else we were doing, as it would be made redundant
     --by the new HeadsUpSession.
     self:SendHeadsUp()
 end
@@ -94,20 +94,20 @@ function CrashProoferHeadsUpSession.SendHeadsUp(self, recipient)
     CP_NETWORK:AddMessage(msg, recipient == nil)
 end
 
-function CrashProofer_ParseHeadsUpPacket(packet, sender)
-    sender = CrashProofer_NameFromSender(sender)
-    D("Received HUP from "..sender)
+function CrashProofer_HandleHeadsUpMessage(builder)
+    -- builder: CrashProoferMessageBuilder containing a complete message
+    D("Received HUP from "..builder.sender)
     if (CP_HEADSUP_SESSION:IsInProgress()) then
         D("..HUPSession already in progress")
         --If we are already in a HeadsUpSession, track the sender.
-        if (CP_HEADSUP_SESSION.Users[sender] == nil) then
-            D(".."..sender.." is new to this session, adding to list.")
-            CP_HEADSUP_SESSION.Users[sender] = 1
+        if (CP_HEADSUP_SESSION.Users[builder.sender] == nil) then
+            D(".."..builder.sender.." is new to this session, adding to list.")
+            CP_HEADSUP_SESSION.Users[builder.sender] = 1
             --Let that person know that we exist.  Don't broadcast globally and spam folks.
             --We only do global broadcasts when we start a session.
-            CP_HEADSUP_SESSION:SendHeadsUp(sender)
+            CP_HEADSUP_SESSION:SendHeadsUp(builder.sender)
         else
-            D(".."..sender.." is already known.")
+            D(".."..builder.sender.." is already known.")
             --We already know about this person, so we don't have to do anything.
         end
         --Don't time out until the airwaves have been silent for a while.
@@ -123,4 +123,4 @@ end
 CP_HEADSUP_SESSION = setmetatable({}, CrashProoferHeadsUpSession)
 
 --Register to receive HeadsUp packets.
-CP_NETWORK:RegisterForMessages(CP_HEADSUP_PREFIX, CrashProofer_ParseHeadsUpPacket)
+CP_NETWORK:RegisterForMessages(CP_HEADSUP_PREFIX, CrashProofer_HandleHeadsUpMessage)

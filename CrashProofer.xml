@@ -2,6 +2,7 @@
 C:\Projects\WoW\Bin\Interface\FrameXML\UI.xsd">
     <Script file="CrashProoferUtils.lua" />
     <Script file="CrashProoferMessage.lua" />
+    <Script file="CrashProoferMessageBuilder.lua" />
     <Script file="CrashProoferNetwork.lua" />
     <Script file="CrashProoferHeadsUpSession.lua" />
     <Script file="CrashProofer.lua" />

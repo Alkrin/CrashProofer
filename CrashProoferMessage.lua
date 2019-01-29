@@ -1,4 +1,6 @@
 --CrashProoferMessage
+-- This class is for splitting data into packets so that we can send it off to other players.
+-- The data is not intended to be read from it.  That is CrashProoferMessageBuilder's job.
 
 -- Rotating id between 0 and 999.  We assign one to each CPMessage as it is created.
 local CP_NEXT_MESSAGE_ID = 0

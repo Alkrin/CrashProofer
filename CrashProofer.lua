@@ -55,8 +55,6 @@ function CrashProofer_OnEvent(frame, event, ...)
     elseif (event == "CHAT_MSG_ADDON") then
         local prefix, msg, channel, _, sender = ...
         if (prefix == CRASHPROOFER_PREFIX) then
-            --D("Received packet from "..sender)
-            --D("   "..msg)
             CrashProofer_NetworkEvent(msg, channel, sender)
         end
     end
@@ -64,6 +62,7 @@ end
 
 function CrashProofer_NetworkEvent(msg, channel, sender)
     -- Process only network events from others; ignore ourselves.
+    -- Strip server name right away.  CrashProofer only talks with the user's server.
     sender = CrashProofer_NameFromSender(sender)
     if (sender ~= UnitName("player")) then
         D("NetworkEvent from "..sender.." ~= "..UnitName("player"))
@@ -167,7 +166,7 @@ end
 --TODO: Functions for replacing our own personal data with somebody else's?  Or would that be
 --        handled already if the consumer just alters their personal data directly?
 
---TODO: Admin panel to manual trigger sessions / sends.
+--TODO: Admin panel to manually trigger sessions / sends / debug events.
 
 
 
