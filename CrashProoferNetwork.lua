@@ -17,62 +17,98 @@ local CP_RECORD_PREFIX   = "REC"
 local CrashProoferNetwork = {} -- the table representing the class, which will double as the metatable for the instances
 CrashProoferNetwork.__index = CrashProoferNetwork -- failed table lookups on the instances should fallback to the class table, to get methods
 
-function CrashProoferNetwork.PacketReceived(self, packet, sender)
-    D("RECEIVED PACKET: "..packet)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    --TODO: Need to create a CrashProoferMessageBuilder class and feed packet#0's into it.
-    --TODO: When a Builder determines that it has all the packets it needs, THEN we should
-    --      inform any registered listeners of the message.
+-- Any in-progress CPMessageBuilders.
+local CP_BUILDERS = {}
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+function CrashProoferNetwork.PacketReceived(self, packet, sender)
+    D("RECEIVED PACKET from "..sender..": "..packet)
     
     --So we just got a packet from another CP user.  What kind of CP packet was it? (Announce, HeadsUp, or Record)
-    local packetType = string.sub(packet, 1, 3)
+    local packetType = self:ExtractPacketType(packet)
+    
+    -- TODO: This might be the spot to decide if we need to abort an AnnounceSession or RecordSession.
 
-    if (CP_UPDATE_REGISTRY[packetType] ~= nil) then
-        CP_UPDATE_REGISTRY[packetType](packet,sender)
-    else
+    -- If the packet type is invalid, we don't want to try to process it.  Just spit out a debug message.
+    if (CP_UPDATE_REGISTRY[packetType] == nil) then
         D("RECEIVED PACKET OF INVALID TYPE: '"..packetType.."'")
+        return
     end
 
-    --[[ Save this bit for when I make the RecordSession class.
-    if (packetType == CP_RECORD_PREFIX) then
-        --What is the identifier that a CP consumer would recognize?
-        local messageType = string.sub(packet, 4, 3)
-        --MessageId is a rotating identifier per user, per session, to help ensure that we don't mis-combine packets.
-        local messageId = string.sub(packet, 7, 3)
-        local packetNumber = string.match(packet, "(%d+)#", 10)
-        if (packetNumber == 0) then
-            --TODO: Start a packet collector.
+    -- This will either plug the packet into an existing builder or else make a new builder for it.
+    local builder = self:GetOrCreateMessageBuilderForPacket(packet, sender)
+
+    -- If the message is complete, send it on to whoever handles it.
+    if (builder ~= nil and builder:IsComplete()) then
+        D("Message is complete!  Sending to the matching Session.")
+        CP_UPDATE_REGISTRY[packetType](builder)
+        -- And now that the message has been handled, erase it to save memory.
+        self:DestroyMessageBuilderForPacket(packet, sender)
+    end
+end
+
+function CrashProoferNetwork.ExtractPacketType(self, packet)
+    -- First three characters identify the CrashProofer packet type (HUP, ANN, REC).
+    return string.sub(packet, 1, 3)
+end
+
+function CrashProoferNetwork.ExtractMessageId(self, packet)
+    -- Second three characters are the sender's messageId (rotating cycle from 0-999)
+    return string.sub(packet, 4, 3)
+end
+
+function CrashProoferNetwork.ExtractPacketNumber(self, packet)
+    -- After the id is the number of the packet (inside the associated message).
+    return tonumber(string.match(packet, "(%d+)#", 7))
+end
+
+function CrashProoferNetwork.ExtractPacketData(self, packet)
+    -- After the packet number is a '#' and then the data.
+    -- For header packets this is the total packet count.
+    -- For data packets this is the actual data segment (which may be blank).
+    return string.match(packet, "%d+#(.*)", 7)
+end
+
+function CrashProoferNetwork.PacketIsHeader(self, packet)
+    -- If the packetNumber is zero, then this is a header, which has the total packet count as its data.
+    local packetNumber = self:ExtractPacketNumber(packet)
+    return packetNumber == 0
+end
+
+function CrashProoferNetwork.GetOrCreateMessageBuilderForPacket(self, packet, sender)
+    -- Make sure there is an entry for this sender.
+    if (CP_BUILDERS[sender] == nil) then
+        CP_BUILDERS[sender] = {}
+    end
+    local buildersForSender = CP_BUILDERS[sender]
+
+    local messageId = self:ExtractMessageId(packet)
+
+    if (self:PacketIsHeader(packet)) then
+        D("This is a header packet.  Creating a new Builder.")
+        -- If this is a header packet, then we need to create a new builder and add it to the stash.
+        buildersForSender[messageId] = CrashProoferMessageBuilder_Create(packet, sender)
+    else
+        -- If this is a data packet...
+        local builder = buildersForSender[messageId]
+        if (builder == nil) then
+            -- ... and we don't have a builder already, then it is invalid for us.
+            -- We will just ignore it, because a HeadsUpSession should be happening right now anyway.
+            -- It should only be possible to receive unrecognized data packets if you log in when someone else is in the middle of an Announce or Record session.
+            D("Received data packet for messageId:"..messageId..", for which you have not seen a Header packet.")
         else
-            --TODO: If there is a matching packet collector, add this packet to it.  If the message is complete, process it.
-            --TODO: If there is no matching packet collector, throw it away and report an invalid packet (so we can start a new HeadsUpSession).
+            D("This is a data packet.  Adding it to the existing builder.")
+            -- ... and we already have a builder, add to it.
+            builder:AddPacket(packet)
         end
     end
-    ]]--
+    -- This may be nil if we receive a bad packet.
+    return buildersForSender[messageId]
+end
+
+function CrashProoferNetwork.DestroyMessageBuilderForPacket(self, packet, sender)
+    -- No need to check for presence, because we only call this function when we already know a builder exists.
+    local messageId = self:ExtractMessageId(packet)
+    CP_BUILDERS[sender][messageId] = nil
 end
 
 -- mType should be a short identifying string (exactly 3 characters).
